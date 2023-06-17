@@ -1,6 +1,6 @@
 name: GeyserBlockJavaPlayers
 version: ${project.version}
-main: net.onebeastchris.geyserperserverpacks.GeyserPerServerPacksBungee
+main: net.onebeastchris.geyserblockjavaplayers.GeyserBlockJavaPlayersBungee
 description: Prevent Java players from joining your server
 softdepends: [floodgate, Geyser-BungeeCord]
 author: Camotoy

@@ -1,9 +1,16 @@
-# Disconnect message to players.
-block-java-message: "This server can only be joined by Bedrock players!"
+# GeyserPerServerPacks configuration file.
 
-# Proxy options to exclude specified server.
-# The "all" option will deny access to the whole network.
-deny-server-access:
-  -
-#  - "all"
-  - "serverhere"
+# Which servers should have per-server packs? Add the server names here.
+# You can make an "all" group, which will apply packs to all servers additionally to per-server packs.
+servers:
+- "example" # This would be the name of the server in your proxy config.
+#- "all"    # Uncomment this line to create an "all" group.
+
+# Should we use the transfer packet to reconnect the player automatically? If this does not work, disable it.
+# If disabled, the player will have to manually connect to the server to get the pack.
+use-transfer-packet: true
+
+# If you want to use the transfer packet, you need to set the Geyser address and port here.
+# If you don't want to use the transfer packet, you can leave this at default.
+ip: 127.0.0.1
+port: 19132
