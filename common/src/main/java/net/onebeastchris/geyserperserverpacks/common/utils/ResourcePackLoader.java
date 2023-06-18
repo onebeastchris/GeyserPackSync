@@ -15,15 +15,16 @@ import java.util.Objects;
 public class ResourcePackLoader {
     public static HashMap<String, List<ResourcePack>> loadPacks(GeyserPerServerPack bootstrap) {
         PSPLogger logger = bootstrap.getLogger();
+
         HashMap<String, List<ResourcePack>> serverPacks = new HashMap<>();
         for (String server : bootstrap.getConfig().getServers()) {
-            if (bootstrap.getDataFolder().resolve(server).toFile().exists()) {
+            if (!bootstrap.getDataFolder().resolve(server).toFile().exists()) {
                 if (bootstrap.getDataFolder().resolve(server).toFile().mkdirs()) {
                     logger.info("Created folder for server " + server);
                     logger.info("You can now add bedrock resource packs for " + server + " by adding them in the folder with that name");
                 }
             } else {
-
+                logger.info("Found folder for server " + server);
                 serverPacks.put(server, loadFromFolder(bootstrap.getDataFolder().resolve(server), logger));
             }
         }
@@ -37,12 +38,6 @@ public class ResourcePackLoader {
 
     public static List<ResourcePack> loadFromFolder(Path path, PSPLogger logger) {
         List<ResourcePack> packs = new ArrayList<>();
-
-        if (!path.toFile().exists()) {
-            logger.info("No pack folder found for server" + path + ", creating");
-            path.toFile().mkdirs();
-            return packs;
-        }
 
         for (File file : Objects.requireNonNull(path.toFile().listFiles())) {
             try {

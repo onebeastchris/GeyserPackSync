@@ -38,7 +38,7 @@ public class GeyserPerServerPacksVelocity {
     private final Path dataDirectory;
     private GeyserPerServerPack plugin;
 
-    private HashMap<UUID, ServerPreConnectEvent.ServerResult> playerCache = new HashMap<>();
+    private HashMap<String, ServerPreConnectEvent.ServerResult> playerCache = new HashMap<>();
 
     private int port;
     private String address;
@@ -66,6 +66,8 @@ public class GeyserPerServerPacksVelocity {
         port = GeyserApi.api().bedrockListener().port();
         String configAddress = GeyserApi.api().bedrockListener().address();
         address = configAddress.equals("0.0.0.0") ? GeyserApi.api().defaultRemoteServer().address() : configAddress;
+
+        address = "127.0.0.1"; // temporary until i can resolve how the heck to set it properly automatically
     }
 
     @Subscribe(order = PostOrder.FIRST)

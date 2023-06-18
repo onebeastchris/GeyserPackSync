@@ -30,11 +30,6 @@ public class GeyserPerServerPack {
     public PSPLogger getLogger() {
         return this.logger;
     }
-
-    public Map<String, List<ResourcePack>> getPacks() {
-        return this.packs;
-    }
-
     public List<ResourcePack> getPacks(String server) {
         return this.packs.get(server);
     }
