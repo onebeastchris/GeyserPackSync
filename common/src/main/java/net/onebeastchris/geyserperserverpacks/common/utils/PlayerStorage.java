@@ -1,17 +1,18 @@
 package net.onebeastchris.geyserperserverpacks.common.utils;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public class PlayerStorage {
-    HashMap<String, Storage> temp = new HashMap<>();
 
-    void addPlayer(String xuid, Storage serverStorage) {
-        temp.put(xuid, serverStorage);
+    // UUID is the player, Storage stores details about which packs to apply/which server to send to
+    HashMap<UUID, Storage> temp = new HashMap<>();
+
+    void addPlayer(UUID uuid, Storage serverStorage) {
+        temp.put(uuid, serverStorage);
     }
 
-    interface Storage {
-        String targetServer();
-
-        boolean initialJoin();
+    // what else do we need to store? a fallback? whether the packs have been sent? o.ó
+    record Storage(String server){
     }
 }
