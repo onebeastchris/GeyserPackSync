@@ -2,13 +2,11 @@ package net.onebeastchris.geyserperserverpacks;
 
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.onebeastchris.geyserperserverpacks.common.Configurate;
-import net.onebeastchris.geyserperserverpacks.common.ResourcePackLoader;
-import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPackBootstrap;
+import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
 import net.onebeastchris.geyserperserverpacks.common.PSPLogger;
-import net.onebeastchris.geyserperserverpacks.common.utils.PlayerStorage;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
@@ -17,53 +15,37 @@ import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoginEvent;
 import org.geysermc.geyser.api.pack.ResourcePack;
 
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
-public final class GeyserPerServerPacksBungee extends Plugin implements Listener, GeyserPerServerPackBootstrap, EventRegistrar {
+public final class GeyserPerServerPacksBungee extends Plugin implements Listener, EventRegistrar {
     private Configurate config;
     private PSPLogger logger;
-    private PlayerStorage playerStorage;
-    private Map<String, List<ResourcePack>> packs;
+    private GeyserPerServerPack plugin;
+    private int port;
+    private String address;
 
     @Override
     public void onEnable() {
         config = Configurate.create(this.getDataFolder().toPath());
         boolean hasGeyser = getProxy().getPluginManager().getPlugin("Geyser-BungeeCord") != null;
 
-        logger = new LoggerImpl(getLogger());
-        packs = ResourcePackLoader.loadPacks(this);
+        logger = new LoggerImpl(this.getLogger());
 
         if (!hasGeyser) {
             getLogger().warning("There is no Geyser or Floodgate plugin detected! Disabling...");
             onDisable();
             return;
         }
-        this.playerStorage = new PlayerStorage();
+
+        plugin = new GeyserPerServerPack(this.getDataFolder().toPath(), config, logger);
+
+        port = GeyserApi.api().bedrockListener().port();
+        String configAddress = GeyserApi.api().bedrockListener().address();
+        address = configAddress.equals("0.0.0.0") ? GeyserApi.api().defaultRemoteServer().address() : configAddress;
 
         getProxy().getPluginManager().registerListener(this, this);
         GeyserApi.api().eventBus().register(this, this);
-    }
-
-    @Override
-    public Path dataFolder() {
-        return this.getDataFolder().toPath();
-    }
-
-    @Override
-    public Configurate config() {
-        return this.config;
-    }
-
-    @Override
-    public PSPLogger logger() {
-        return this.logger;
-    }
-
-    @Override
-    public Map<String, List<ResourcePack>> packs() {
-        return this.packs;
     }
 
     @EventHandler
@@ -75,6 +57,18 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
             return;
         }
 
+        UUID playerUUID = event.getPlayer().getUniqueId();
+        if (plugin.getServerFromCache(playerUUID) != null) {
+            // The player is known to us, so we can just send them to the server they tried to connect to before
+            event.setTarget(getProxy().getServerInfo(plugin.getServerFromCache(playerUUID)));
+            plugin.removePlayerFromCache(playerUUID);
+        } else {
+            // The player is not known to us, so we need to save the server they tried to connect to and reconnect them to apply packs
+            plugin.addPlayerToCache(playerUUID, event.getTarget().getName());
+            event.setCancelled(true);
+            GeyserApi.api().transfer(playerUUID, address, port);
+        }
+
     }
 
 
@@ -82,13 +76,18 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
     public void onGeyserLogin(SessionLoginEvent event) {
         //if we can get the server name from the event, we can use that to get the right resource pack before the player joins the server
         GeyserConnection connection = event.connection();
-        // TODO: do we need this? e.g. to check if the session reconnected successfully
+        // TODO: can we use forced hosts to get us the server name, so we can directly send the right packs?
     }
 
     @Subscribe
     public void onGeyserResourcePackRequest(SessionLoadResourcePacksEvent event) {
-        //do stuff here. Like; send the player the right resource pack
-        GeyserConnection connection = event.connection();
-        // TODO: get & send target server's resource packs
+        UUID uuid = event.connection().javaUuid();
+        String server = plugin.getServerFromCache(uuid);
+        if (server != null) {
+            List<ResourcePack> packs = plugin.getPacks(server);
+            for (ResourcePack pack : packs) {
+                event.register(pack);
+            }
+        }
     }
 }

@@ -11,32 +11,41 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.onebeastchris.geyserperserverpacks.common.Configurate;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPackBootstrap;
-import net.onebeastchris.geyserperserverpacks.common.PSPLogger;
+import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
 import org.geysermc.geyser.api.GeyserApi;
+import org.geysermc.geyser.api.connection.GeyserConnection;
+import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
+import org.geysermc.geyser.api.event.bedrock.SessionLoginEvent;
 import org.geysermc.geyser.api.pack.ResourcePack;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 @Plugin(
         id = "geyserperserverpacks",
         name = "GeyserPerServerPacks",
         version = "1.0-SNAPSHOT"
 )
-public class GeyserPerServerPacksVelocity implements GeyserPerServerPackBootstrap {
-    private final Logger logger;
+public class GeyserPerServerPacksVelocity {
+    private final LoggerImpl logger;
     private final ProxyServer server;
     private Configurate config = null;
     private final Path dataDirectory;
+    private GeyserPerServerPack plugin;
+
+    private HashMap<UUID, ServerPreConnectEvent.ServerResult> playerCache = new HashMap<>();
+
+    private int port;
+    private String address;
     private static LegacyComponentSerializer serializer = LegacyComponentSerializer.builder().character('&').hexCharacter('#').hexColors().build();
 
     @Inject
     public GeyserPerServerPacksVelocity(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
         this.server = server;
-        this.logger = logger;
+        this.logger = new LoggerImpl(logger);
         this.dataDirectory = folder;
     }
 
@@ -46,46 +55,58 @@ public class GeyserPerServerPacksVelocity implements GeyserPerServerPackBootstra
         boolean hasGeyser = server.getPluginManager().isLoaded("Geyser-Velocity");
 
         if (!hasGeyser) {
-            logger.warn("There is no Geyser or Floodgate plugin detected!");
+            logger.error("There is no Geyser plugin detected!");
             return;
         }
 
+        plugin = new GeyserPerServerPack(this.dataDirectory, config, logger);
 
+        port = GeyserApi.api().bedrockListener().port();
+        String configAddress = GeyserApi.api().bedrockListener().address();
+        address = configAddress.equals("0.0.0.0") ? GeyserApi.api().defaultRemoteServer().address() : configAddress;
     }
 
     @Subscribe(order = PostOrder.FIRST)
     public void onPlayerChangeServer(ServerPreConnectEvent event) {
 
+        UUID uuid = event.getPlayer().getUniqueId();
         //Check if the player is a bedrock player
-        if (!GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
+        if (!GeyserApi.api().isBedrockPlayer(uuid)) {
             return;
         }
 
-        // TODO
+        ServerPreConnectEvent.ServerResult result = event.getResult();
 
+        if (playerCache.get(uuid) != null) {
+            //If the player is already connected to a server, we need to remove them from the cache
+            event.setResult(playerCache.get(uuid));
+        } else {
+            //If the player is not in the cache, we need to add them to the cache
+            playerCache.put(uuid, result);
+            event.setResult();
+        }
     }
 
     public static TextComponent color(String s) {
         return serializer.deserialize(s);
     }
 
-    @Override
-    public Path dataFolder() {
-        return null;
+    @org.geysermc.event.subscribe.Subscribe
+    public void onGeyserLogin(SessionLoginEvent event) {
+        //if we can get the server name from the event, we can use that to get the right resource pack before the player joins the server
+        GeyserConnection connection = event.connection();
+        // TODO: can we use forced hosts to get us the server name, so we can directly send the right packs?
     }
 
-    @Override
-    public Configurate config() {
-        return null;
-    }
-
-    @Override
-    public PSPLogger logger() {
-        return null ;
-    }
-
-    @Override
-    public Map<String, List<ResourcePack>> packs() {
-        return null;
+    @org.geysermc.event.subscribe.Subscribe
+    public void onGeyserResourcePackRequest(SessionLoadResourcePacksEvent event) {
+        UUID uuid = event.connection().javaUuid();
+        String server = plugin.getServerFromCache(uuid);
+        if (server != null) {
+            List<ResourcePack> packs = plugin.getPacks(server);
+            for (ResourcePack pack : packs) {
+                event.register(pack);
+            }
+        }
     }
 }

@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.Objects;
 
 public class ResourcePackLoader {
-    public static HashMap<String, List<ResourcePack>> loadPacks(GeyserPerServerPackBootstrap bootstrap) {
-        PSPLogger logger = bootstrap.logger();
+    public static HashMap<String, List<ResourcePack>> loadPacks(GeyserPerServerPack bootstrap) {
+        PSPLogger logger = bootstrap.getLogger();
         HashMap<String, List<ResourcePack>> serverPacks = new HashMap<>();
-        for (String server : bootstrap.config().getServers()) {
-            if (bootstrap.dataFolder().resolve(server).toFile().exists()) {
-                if (bootstrap.dataFolder().resolve(server).toFile().mkdirs()) {
+        for (String server : bootstrap.getConfig().getServers()) {
+            if (bootstrap.getDataFolder().resolve(server).toFile().exists()) {
+                if (bootstrap.getDataFolder().resolve(server).toFile().mkdirs()) {
                     logger.info("Created folder for server " + server);
                     logger.info("You can now add bedrock resource packs for " + server + " by adding them in the folder with that name");
                 }
             } else {
-                serverPacks.put(server, loadFromFolder(bootstrap.dataFolder().resolve(server), logger));
+                serverPacks.put(server, loadFromFolder(bootstrap.getDataFolder().resolve(server), logger));
             }
         }
         if (serverPacks.size() > 0) {
