@@ -10,7 +10,8 @@ plugins {
 }
 
 repositories {
-    mavenLocal()
+    // mavenLocal()
+    mavenCentral()
     maven {
         url = uri('https://repo.maven.apache.org/maven2/')
     }
@@ -20,7 +21,8 @@ repositories {
     }
 
     maven {
-        url = uri('https://repo.opencollab.dev/main')
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
     }
 
     maven {
@@ -29,6 +31,14 @@ repositories {
 
     maven {
         url = uri('https://papermc.io/repo/repository/maven-public/')
+    }
+
+    maven {
+        url = uri('jitpack.io')
+    }
+
+    maven {
+        url = uri('https://repo.opencollab.dev/main')
     }
 }
 

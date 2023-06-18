@@ -5,13 +5,14 @@
  */
 
 plugins {
-    id 'net.onebeastchris.geyserperserverpacks.java-conventions'
+    id("net.onebeastchris.geyserperserverpacks.java-conventions")
+    id("io.freefair.lombok") version "8.0.1"
 }
 
 dependencies {
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.14.2'
-    implementation 'org.projectlombok:lombok:1.18.22'
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.14.2")
+    compileOnly("org.projectlombok:lombok:1.18.22")
     compileOnly("org.geysermc.geyser:api:2.1.1-SNAPSHOT")
 }
 

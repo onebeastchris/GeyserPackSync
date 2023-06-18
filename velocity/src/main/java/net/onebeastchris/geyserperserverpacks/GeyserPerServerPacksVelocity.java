@@ -8,6 +8,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.onebeastchris.geyserperserverpacks.common.Configurate;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Plugin(
@@ -80,10 +82,12 @@ public class GeyserPerServerPacksVelocity {
         if (playerCache.get(uuid) != null) {
             //If the player is already connected to a server, we need to remove them from the cache
             event.setResult(playerCache.get(uuid));
+            playerCache.remove(uuid);
         } else {
             //If the player is not in the cache, we need to add them to the cache
             playerCache.put(uuid, result);
-            event.setResult();
+            event.setResult(ServerPreConnectEvent.ServerResult.denied());
+            GeyserApi.api().transfer(uuid, address, port);
         }
     }
 
@@ -101,12 +105,15 @@ public class GeyserPerServerPacksVelocity {
     @org.geysermc.event.subscribe.Subscribe
     public void onGeyserResourcePackRequest(SessionLoadResourcePacksEvent event) {
         UUID uuid = event.connection().javaUuid();
-        String server = plugin.getServerFromCache(uuid);
-        if (server != null) {
-            List<ResourcePack> packs = plugin.getPacks(server);
-            for (ResourcePack pack : packs) {
-                event.register(pack);
-            }
+        Optional<RegisteredServer> server = playerCache.get(uuid).getServer();
+
+        if (server.isEmpty()) {
+            return;
+        }
+
+        List<ResourcePack> packs = plugin.getPacks(server.get().getServerInfo().getName());
+        for (ResourcePack pack : packs) {
+            event.register(pack);
         }
     }
 }

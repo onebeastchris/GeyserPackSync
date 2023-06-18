@@ -1,11 +1,10 @@
 package net.onebeastchris.geyserperserverpacks.common;
-import net.onebeastchris.geyserperserverpacks.common.utils.PlayerStorage;
+import net.onebeastchris.geyserperserverpacks.common.utils.ResourcePackLoader;
 import org.geysermc.geyser.api.pack.ResourcePack;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public class GeyserPerServerPack {
     private final Path dataFolder;
