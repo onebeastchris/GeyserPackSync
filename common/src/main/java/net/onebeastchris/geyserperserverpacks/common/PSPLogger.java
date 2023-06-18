@@ -1,6 +1,6 @@
 package net.onebeastchris.geyserperserverpacks.common;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface PSPLogger {
 

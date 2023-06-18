@@ -7,5 +7,4 @@
 rootProject.name = 'GeyserPerServerPacks'
 include(':common')
 include(':bungeecord')
-include(':spigot')
 include(':velocity')

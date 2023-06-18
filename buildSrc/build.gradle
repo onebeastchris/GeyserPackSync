@@ -12,4 +12,31 @@ plugins {
 repositories {
     // Use the plugin portal to apply community plugins in convention plugins.
     gradlePluginPortal()
+
+    repositories {
+        mavenLocal()
+        maven {
+            url = uri('https://repo.maven.apache.org/maven2/')
+        }
+
+        maven {
+            url = uri('https://oss.sonatype.org/content/repositories/snapshots')
+        }
+
+        maven {
+            url = uri('https://repo.opencollab.dev/main')
+        }
+
+        maven {
+            url = uri('https://hub.spigotmc.org/nexus/content/repositories/snapshots/')
+        }
+
+        maven {
+            url = uri('https://papermc.io/repo/repository/maven-public/')
+        }
+    }
+}
+
+dependencies {
+    compileOnly("org.geysermc.geyser:api:2.1.1-SNAPSHOT")
 }

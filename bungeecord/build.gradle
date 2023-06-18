@@ -11,8 +11,7 @@ plugins {
 dependencies {
     implementation project(':common')
     compileOnly 'net.md-5:bungeecord-api:1.17-R0.1-SNAPSHOT'
-    compileOnly 'org.geysermc.geyser:api:2.1.0-SNAPSHOT'
-    compileOnly 'org.geysermc.geyser:core:2.1.0-SNAPSHOT'
+    compileOnly("org.geysermc.geyser:api:2.1.1-SNAPSHOT")
 }
 
 description = 'bungeecord'

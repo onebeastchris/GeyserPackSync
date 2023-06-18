@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class Configurate {
+
     /**
      * Load config
      *
@@ -51,12 +52,4 @@ public class Configurate {
     @JsonProperty("use-transfer-packet")
     @Getter
     boolean useTransferPacket;
-
-    @JsonProperty("ip")
-    @Getter
-    private String ip;
-
-    @JsonProperty("port")
-    @Getter
-    private int port;
 }
