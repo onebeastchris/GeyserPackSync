@@ -79,15 +79,21 @@ public class GeyserPerServerPacksVelocity {
             return;
         }
 
+        GeyserConnection connection = GeyserApi.api().connectionByUuid(uuid);
+        if (connection == null) {
+            return;
+        }
+        String xuid = connection.xuid();
+
         ServerPreConnectEvent.ServerResult result = event.getResult();
 
-        if (playerCache.get(uuid) != null) {
+        if (playerCache.get(xuid) != null) {
             //If the player is already connected to a server, we need to remove them from the cache
-            event.setResult(playerCache.get(uuid));
-            playerCache.remove(uuid);
+            event.setResult(playerCache.get(xuid));
+            playerCache.remove(xuid);
         } else {
             //If the player is not in the cache, we need to add them to the cache
-            playerCache.put(uuid, result);
+            playerCache.put(xuid, result);
             event.setResult(ServerPreConnectEvent.ServerResult.denied());
             GeyserApi.api().transfer(uuid, address, port);
         }
@@ -106,8 +112,8 @@ public class GeyserPerServerPacksVelocity {
 
     @org.geysermc.event.subscribe.Subscribe
     public void onGeyserResourcePackRequest(SessionLoadResourcePacksEvent event) {
-        UUID uuid = event.connection().javaUuid();
-        Optional<RegisteredServer> server = playerCache.get(uuid).getServer();
+        String xuid = event.connection().xuid();
+        Optional<RegisteredServer> server = playerCache.get(xuid).getServer();
 
         if (server.isEmpty()) {
             return;

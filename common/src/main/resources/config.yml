@@ -1,8 +1,19 @@
 # GeyserPerServerPacks configuration file.
 
-# Which servers should have per-server packs? Add the server names here.
+# Set the Geyser ip and port here.
+address: "127.0.0.1"
+port: 19132
 
+# Which servers should have per-server packs? Add the server names here.
 servers:
 # This would be the name of the server(s) in your proxy config.
 # - "lobby"
 # - "example"
+
+#
+
+# We can't apply the packs of the first server you join to, so you can set a default server here.
+# Forced hosts override this.
+default-server: "lobby"
+
+debug: false

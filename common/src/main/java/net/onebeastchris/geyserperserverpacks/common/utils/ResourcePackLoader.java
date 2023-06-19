@@ -1,5 +1,6 @@
 package net.onebeastchris.geyserperserverpacks.common.utils;
 
+import net.onebeastchris.geyserperserverpacks.common.Configurate;
 import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
 import net.onebeastchris.geyserperserverpacks.common.PSPLogger;
 import org.geysermc.geyser.api.pack.PackCodec;
@@ -17,15 +18,15 @@ public class ResourcePackLoader {
         PSPLogger logger = bootstrap.getLogger();
 
         HashMap<String, List<ResourcePack>> serverPacks = new HashMap<>();
-        for (String server : bootstrap.getConfig().getServers()) {
-            if (!bootstrap.getDataFolder().resolve(server).toFile().exists()) {
-                if (bootstrap.getDataFolder().resolve(server).toFile().mkdirs()) {
+        for (Configurate.Server server : bootstrap.getConfig().getServers()) {
+            if (!bootstrap.getDataFolder().resolve(server.name()).toFile().exists()) {
+                if (bootstrap.getDataFolder().resolve(server.name()).toFile().mkdirs()) {
                     logger.info("Created folder for server " + server);
                     logger.info("You can now add bedrock resource packs for " + server + " by adding them in the folder with that name");
                 }
             } else {
                 logger.info("Found folder for server " + server);
-                serverPacks.put(server, loadFromFolder(bootstrap.getDataFolder().resolve(server), logger));
+                serverPacks.put(server.name(), loadFromFolder(bootstrap.getDataFolder().resolve(server.name()), logger));
             }
         }
         if (serverPacks.size() > 0) {
