@@ -24,8 +24,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-@Plugin(id = "geyserperserverpacks", name = "GeyserPerServerPacks", version = "1.0-SNAPSHOT",
-        url = "github.com/onebeastchris/GeyserPerServerPacks", description = "A plugin that allows you to set a different resource pack for each server.", authors = {"onebeastchris"})
+@Plugin(
+        id = "geyserperserverpacks",
+        name = "GeyserPerServerPacks",
+        version = "1.0-SNAPSHOT",
+        description = "GeyserPerServerPacks is a plugin that allows you to set a different resource pack for each server.",
+        authors = {"onebeastchris"}
+)
 public class GeyserPerServerPacksVelocity implements EventRegistrar {
     private final LoggerImpl logger;
     private final ProxyServer server;
