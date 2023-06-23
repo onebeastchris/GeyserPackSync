@@ -75,6 +75,13 @@ public class Configurate {
     @Getter
     boolean debug;
 
+    @JsonProperty("kick-on-mismatch")
+    @Getter
+    boolean kickOnMismatch;
+
+    @JsonProperty("kick-message")
+    @Getter
+    String kickMessage;
     public record Server(@NonNull @JsonProperty("name") String name,
                          @Nullable @JsonProperty("forced-host") String forcedHost) {
     }

@@ -18,6 +18,11 @@ public class ResourcePackLoader {
         PSPLogger logger = bootstrap.getLogger();
 
         HashMap<String, List<ResourcePack>> serverPacks = new HashMap<>();
+
+        if (bootstrap.getConfig() == null || bootstrap.getConfig().getServers() == null) {
+            return serverPacks;
+        }
+
         for (Configurate.Server server : bootstrap.getConfig().getServers()) {
             if (!bootstrap.getDataFolder().resolve(server.name()).toFile().exists()) {
                 if (bootstrap.getDataFolder().resolve(server.name()).toFile().mkdirs()) {

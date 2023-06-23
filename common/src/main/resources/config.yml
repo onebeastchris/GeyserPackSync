@@ -15,4 +15,9 @@ servers:
 # Forced hosts override this.
 default-server: "lobby"
 
+# When a player first joins the proxy, they get default packs, since we can't know which server-specific packs to give them.
+# Enable the option below whether players with mis-matched packs should be kicked or not.
+kick-on-mismatch: false
+kick-message: "Please connect again in order to join with the correct resource packs."
+
 debug: false

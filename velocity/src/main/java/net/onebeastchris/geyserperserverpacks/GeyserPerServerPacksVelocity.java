@@ -15,6 +15,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
+import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoginEvent;
 import org.geysermc.geyser.api.pack.ResourcePack;
@@ -40,9 +41,6 @@ public class GeyserPerServerPacksVelocity {
 
     private HashMap<String, ServerPreConnectEvent.ServerResult> playerCache = new HashMap<>();
 
-    private int port;
-    private String address;
-    private static LegacyComponentSerializer serializer = LegacyComponentSerializer.builder().character('&').hexCharacter('#').hexColors().build();
 
     @Inject
     public GeyserPerServerPacksVelocity(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
@@ -62,12 +60,6 @@ public class GeyserPerServerPacksVelocity {
         }
 
         plugin = new GeyserPerServerPack(this.dataDirectory, config, logger);
-
-        port = GeyserApi.api().bedrockListener().port();
-        String configAddress = GeyserApi.api().bedrockListener().address();
-        address = configAddress.equals("0.0.0.0") ? GeyserApi.api().defaultRemoteServer().address() : configAddress;
-
-        address = "127.0.0.1"; // temporary until i can resolve how the heck to set it properly automatically
     }
 
     @Subscribe(order = PostOrder.FIRST)
@@ -95,16 +87,13 @@ public class GeyserPerServerPacksVelocity {
             //If the player is not in the cache, we need to add them to the cache
             playerCache.put(xuid, result);
             event.setResult(ServerPreConnectEvent.ServerResult.denied());
-            GeyserApi.api().transfer(uuid, address, port);
+            connection.transfer(plugin.getConfig().getAddress(), plugin.getConfig().getPort());
         }
     }
 
-    public static TextComponent color(String s) {
-        return serializer.deserialize(s);
-    }
 
     @org.geysermc.event.subscribe.Subscribe
-    public void onGeyserLogin(SessionLoginEvent event) {
+    public void onGeyserLogin(SessionInitializeEvent event) {
         //if we can get the server name from the event, we can use that to get the right resource pack before the player joins the server
         GeyserConnection connection = event.connection();
         // TODO: can we use forced hosts to get us the server name, so we can directly send the right packs?
