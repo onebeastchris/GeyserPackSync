@@ -14,15 +14,12 @@ import org.geysermc.api.connection.Connection;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.event.EventRegistrar;
-import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 import org.geysermc.geyser.api.pack.ResourcePack;
-import org.geysermc.geyser.session.GeyserSession;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public final class GeyserPerServerPacksBungee extends Plugin implements Listener, EventRegistrar {
@@ -30,7 +27,7 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
     private GeyserPerServerPack plugin;
     private HashMap<String, ServerInfo> playerCache;
 
-    // needed as a temporary workaround until i can figure out how to always apply the correct pack.
+    // needed as a temporary workaround until I can figure out how to always apply the correct pack.
     private ArrayList<String> xuidsWithDefaultPack;
 
     @Override
