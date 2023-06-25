@@ -9,6 +9,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import net.kyori.adventure.text.Component;
 import net.onebeastchris.geyserperserverpacks.common.Configurate;
 import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
 import org.geysermc.geyser.api.GeyserApi;
@@ -36,11 +37,9 @@ public class GeyserPerServerPacksVelocity implements EventRegistrar {
     private final ProxyServer server;
     private final Path dataDirectory;
     private GeyserPerServerPack plugin;
-
     private HashMap<String, RegisteredServer> playerCache;
-
-    // needed as a temporary workaround until I can figure out how to always apply the correct pack.
-    private ArrayList<String> xuidsWithDefaultPack;
+    private HashMap<UUID, String> tempUntilServerKnown;
+    private final List<String> unknownPacks = new ArrayList<>();
 
     @Inject
     public GeyserPerServerPacksVelocity(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
@@ -52,84 +51,114 @@ public class GeyserPerServerPacksVelocity implements EventRegistrar {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         Configurate config = Configurate.create(this.dataDirectory);
-        boolean hasGeyser = server.getPluginManager().isLoaded("Geyser-Velocity");
+        boolean hasGeyser = server.getPluginManager().isLoaded("geyser");
 
         if (!hasGeyser) {
             logger.error("There is no Geyser plugin detected!");
             return;
         }
 
-        plugin = new GeyserPerServerPack(this.dataDirectory, config, logger);
+        if (config == null) {
+            logger.error("There was an error loading the config!");
+            return;
+        }
 
+        plugin = new GeyserPerServerPack(this.dataDirectory, config, logger);
         playerCache = new HashMap<>();
-        xuidsWithDefaultPack = new ArrayList<>();
+        tempUntilServerKnown = new HashMap<>();
 
         GeyserApi.api().eventBus().register(this, this);
+        GeyserApi.api().eventBus().subscribe(this, SessionLoadResourcePacksEvent.class, this::onGeyserResourcePackRequest);
 
         logger.info("GeyserPerServerPacks has been enabled!");
+        logger.setDebug(config.isDebug());
 
-        if (config.isDebug()) {
-            logger.info("Debug mode is enabled!");
-            for (RegisteredServer server : this.server.getAllServers()) {
-                logger.info("Server: " + server.getServerInfo().getName());
-                logger.info("Packs: " + plugin.getPacks(server.getServerInfo().getName()));
-            }
+        logger.debug("Debug mode is enabled!");
+        for (RegisteredServer server : this.server.getAllServers()) {
+            logger.debug("Server: " + server.getServerInfo().getName());
+            logger.debug("Packs: " + plugin.getPacks(server.getServerInfo().getName()));
         }
     }
 
-    @Subscribe(order = PostOrder.LATE)
+    // late: grab server if needed. Last to not break compat with other plugins changing the destination server.
+    @Subscribe(order = PostOrder.LAST)
     public void onPlayerChangeServer(ServerPreConnectEvent event) {
-
         UUID uuid = event.getPlayer().getUniqueId();
+
+        //Check if the player is a bedrock player
+        if (!tempUntilServerKnown.containsKey(uuid)) {
+            logger.debug("No need to grab server!");
+            return;
+        }
+
+        if (event.getResult().getServer().isEmpty() || !event.getResult().isAllowed()) {
+            logger.debug("Server is empty/not allowed. Not caching/transferring.");
+            tempUntilServerKnown.remove(uuid);
+            return;
+        }
+        String xuid = tempUntilServerKnown.remove(uuid);
+        RegisteredServer server = event.getResult().getServer().get();
+
+        playerCache.put(xuid, server);
+
+        boolean isFirstConnection = unknownPacks.remove(xuid);
+        logger.debug("isFirstConnection: " + isFirstConnection);
+        // ugly, yes, but until we use void/limbo servers, this is the only way :(
+        if (isFirstConnection) {
+            if (server.getServerInfo().getName().equals(plugin.getConfig().getDefaultServer())) {
+                logger.debug("Player " + xuid + " has the default pack, and is going to the default server, allowing connection");
+                playerCache.remove(xuid);
+            } else {
+                if (plugin.getConfig().isKickOnMismatch()) {
+                    logger.debug("Player " + xuid + " has the default pack, but is connecting to " + server.getServerInfo().getName() + ", kicking");
+                    event.getPlayer().disconnect(Component.text(plugin.getConfig().getKickMessage()));
+                } else {
+                    logger.warning("Player " + xuid + " has the default pack, but is connecting to " + server.getServerInfo().getName() + ".");
+                }
+            }
+        } else {
+            logger.debug("Player " + xuid + " is being reconnected...");
+            GeyserApi.api().transfer(uuid, plugin.getConfig().getAddress(), plugin.getConfig().getPort());
+        }
+    }
+
+    @Subscribe(order = PostOrder.FIRST)
+    public void onConnect(ServerPreConnectEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+
         //Check if the player is a bedrock player
         if (!GeyserApi.api().isBedrockPlayer(uuid)) {
-            logger.debug("Player " + uuid + " is not a bedrock player!");
-            return;
-        }
-
-        if (event.getResult().getServer().isEmpty()) {
-            logger.debug("Server is empty");
-            return;
-        }
-
-        if (!event.getResult().isAllowed()) {
-            logger.debug("Server is not allowed");
+            logger.debug("Player " + event.getPlayer().getUsername() + " is not a bedrock player!");
             return;
         }
 
         GeyserConnection connection = GeyserApi.api().connectionByUuid(uuid);
         if (connection == null) {
-            logger.error("Player " + uuid + " is not connected to a server!");
+            logger.error("Connection is null for Bedrock player " + uuid + "!");
             return;
         }
         String xuid = connection.xuid();
+
         if (playerCache.containsKey(xuid)) {
             logger.debug("contains xuid");
             if (playerCache.get(xuid) == null) {
-                logger.error("Player " + xuid + " is not connected to a server!");
+                logger.debug("Player " + xuid + " is not connected to a server!");
                 return;
             }
             //If the player is already connected to a server, we need to remove them from the cache
             logger.debug("Player " + xuid + " is known to us, redirecting to " + playerCache.get(xuid).getServerInfo().getName());
             event.setResult(ServerPreConnectEvent.ServerResult.allowed(playerCache.get(xuid)));
+
             playerCache.remove(xuid);
-            return;
         } else {
             logger.debug("does not contain xuid");
-            //If the player is not in the cache, we need to add them to the cache
-            try {
-                playerCache.put(xuid, event.getResult().getServer().get());
-                event.setResult(ServerPreConnectEvent.ServerResult.denied());
-                connection.transfer(plugin.getConfig().getAddress(), plugin.getConfig().getPort());
-            } catch (Exception e) {
-                logger.error("Player " + xuid + " is not connecting to a server!");
-                return;
-            }
+            // grab server once event is completed to not break compat with other plugins changing the destination server.
+            tempUntilServerKnown.put(uuid, xuid);
         }
     }
 
 
-    @org.geysermc.event.subscribe.Subscribe
+    //@org.geysermc.event.subscribe.Subscribe - https://github.com/GeyserMC/Geyser/issues/3694 goes brrrrrrrr
     public void onGeyserResourcePackRequest(SessionLoadResourcePacksEvent event) {
         String xuid = event.connection().xuid();
 
@@ -148,9 +177,7 @@ public class GeyserPerServerPacksVelocity implements EventRegistrar {
             for (ResourcePack pack : packs) {
                 event.register(pack);
             }
-            if (plugin.getConfig().isKickOnMismatch()) {
-                xuidsWithDefaultPack.add(xuid);
-            }
+            unknownPacks.add(xuid);
         }
     }
 }

@@ -17,7 +17,6 @@ import org.geysermc.geyser.api.event.EventRegistrar;
 import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 import org.geysermc.geyser.api.pack.ResourcePack;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -26,18 +25,12 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
     private PSPLogger logger;
     private GeyserPerServerPack plugin;
     private HashMap<String, ServerInfo> playerCache;
-
-    // needed as a temporary workaround until I can figure out how to always apply the correct pack.
-    private ArrayList<String> xuidsWithDefaultPack;
+    private HashMap<UUID, String> tempUntilServerKnown;
 
     @Override
     public void onEnable() {
         Configurate config = Configurate.create(this.getDataFolder().toPath());
         boolean hasGeyser = getProxy().getPluginManager().getPlugin("Geyser-BungeeCord") != null;
-
-        logger = new LoggerImpl(this.getLogger());
-
-        logger.setDebug(config.isDebug());
 
         if (!hasGeyser) {
             getLogger().severe("There is no Geyser or Floodgate plugin detected! Disabling...");
@@ -45,39 +38,88 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
             return;
         }
 
-        plugin = new GeyserPerServerPack(this.getDataFolder().toPath(), config, logger);
+        if (config == null) {
+            logger.error("There was an error loading the config!");
+            return;
+        }
 
+        logger = new LoggerImpl(this.getLogger());
+        plugin = new GeyserPerServerPack(this.getDataFolder().toPath(), config, logger);
         playerCache = new HashMap<>();
-        xuidsWithDefaultPack = new ArrayList<>();
+        tempUntilServerKnown = new HashMap<>();
 
         getProxy().getPluginManager().registerListener(this, this);
         GeyserApi.api().eventBus().register(this, this);
 
         getLogger().info("GeyserPerServerPacks has been enabled!");
+        logger.setDebug(config.isDebug());
 
+        logger.debug("Debug mode is enabled");
         if (config.isDebug()) {
             for (ServerInfo server : getProxy().getServers().values()) {
-                for (ResourcePack pack : plugin.getPacks(server.getName())) {
-                    logger.debug("Server " + server.getName() + " has pack " + pack.manifest().header().description());
-                }
+                logger.debug("Server: " + server.getName());
+                logger.debug("Packs: " + plugin.getPacks(server.getName()));
             }
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onServerConnectEvent(ServerConnectEvent event) {
-        logger.debug("ServerConnectEvent");
+        logger.debug("ServerConnectEvent - lowest priority");
+        UUID uuid = event.getPlayer().getUniqueId();
+
+        //Check if the player is a bedrock player
+        if (!tempUntilServerKnown.containsKey(uuid)) {
+            logger.debug("No need to grab server!");
+            return;
+        }
+
+        if (!event.getTarget().canAccess(event.getPlayer())) {
+            logger.debug("Player " + event.getPlayer().getName() + " can't access " + event.getTarget().getName());
+            tempUntilServerKnown.remove(uuid);
+            return;
+        }
+
+        String xuid = tempUntilServerKnown.remove(uuid);
+        ServerInfo server = event.getTarget();
+
+        playerCache.put(xuid, server);
+
+        boolean firstConnection = event.getReason() == ServerConnectEvent.Reason.JOIN_PROXY || event.getReason() == ServerConnectEvent.Reason.LOBBY_FALLBACK;
+        // ugly, yes, but until we use void/limbo servers, this is the only way :(
+        if (firstConnection) {
+            if (server.getName().equals(plugin.getConfig().getDefaultServer())) {
+                logger.debug("Player " + xuid + " has the default pack, and is going to the default server, allowing connection");
+                playerCache.remove(xuid);
+            } else {
+                if (plugin.getConfig().isKickOnMismatch()) {
+                    logger.debug("Player " + xuid + " has the default pack, but is connecting to " + server.getName() + ", kicking");
+                    event.getPlayer().disconnect(new TextComponent(plugin.getConfig().getKickMessage()));
+                    event.setCancelled(true);
+                } else {
+                    logger.warning("Player " + xuid + " has the default pack, but is connecting to " + server.getName() + ".");
+                }
+            }
+        } else {
+            logger.debug("Player " + xuid + " is being reconnected...");
+            GeyserApi.api().transfer(uuid, plugin.getConfig().getAddress(), plugin.getConfig().getPort());
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onConnect(ServerConnectEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
 
         // check if the player is a bedrock player
-        if (!GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
+        if (!GeyserApi.api().isBedrockPlayer(uuid)) {
             logger.debug("Player " + event.getPlayer().getName() + " is not a Bedrock player");
             return;
         }
 
-        UUID playerUUID = event.getPlayer().getUniqueId();
-        Connection connection = GeyserApi.api().connectionByUuid(playerUUID);
+        Connection connection = GeyserApi.api().connectionByUuid(uuid);
         if (connection == null) {
-            logger.error("Connection is null for Bedrock player " + playerUUID);
+            logger.error("Connection is null for Bedrock player " + uuid);
             return;
         }
 
@@ -92,43 +134,10 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
             logger.debug("Player " + xuid + " is known to us, redirecting to " + playerCache.get(xuid).getName());
             event.setTarget(playerCache.remove(xuid));
             playerCache.remove(xuid);
-            return;
         } else {
             logger.debug("does not contain xuid");
-
-            if (event.getReason() == ServerConnectEvent.Reason.JOIN_PROXY || event.getReason() == ServerConnectEvent.Reason.LOBBY_FALLBACK) {
-                if (plugin.getConfig().isKickOnMismatch()) {
-                    if (xuidsWithDefaultPack.remove(xuid)) {
-                        if (event.getTarget().getName().equals(plugin.getConfig().getDefaultServer())) {
-                            logger.debug("Player " + xuid + " has the default pack, allowing connection");
-                        } else {
-                            logger.debug("Player " + xuid + " has the default pack, but is connecting to " + event.getTarget().getName() + ", kicking");
-                            event.getPlayer().disconnect(new TextComponent(plugin.getConfig().getKickMessage()));
-                            playerCache.put(xuid, event.getTarget());
-                        }
-                        return;
-                    }
-                }
-
-                // TODO: use seamless transfer packet.
-                // we need to get the target server here, save it, and reconnect bedrock player.
-                // we cant just reconnect the player, since that is seemingly ignored while logging in
-
-                //if (connection.transfer("127.0.0.1", 19132)) {
-                //    this.getProxy().getScheduler().schedule(this, () -> {
-                //        logger.info("Transfer sent");
-                //        event.getPlayer().disconnect(new TextComponent("You have been redirected to the Bedrock server"));
-                //    }, 55, TimeUnit.MILLISECONDS);
-                //} else {
-                //    logger.error("Failed to transfer player " + xuid + " to Bedrock server");
-                //}
-                return;
-            }
-
-            logger.debug("Player " + xuid + " is not known to us, saving " + event.getTarget().getName() + " as target server");
-            playerCache.put(xuid, event.getTarget());
-            connection.transfer(plugin.getConfig().getAddress(), plugin.getConfig().getPort());
-            event.setCancelled(true);
+            // grab server once event is completed to not break compat with other plugins changing the destination server.
+            tempUntilServerKnown.put(uuid, xuid);
         }
     }
 
@@ -151,9 +160,6 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
             List<ResourcePack> packs = plugin.getPacks(plugin.getConfig().getDefaultServer());
             for (ResourcePack pack : packs) {
                 event.register(pack);
-            }
-            if (plugin.getConfig().isKickOnMismatch()) {
-                xuidsWithDefaultPack.add(xuid);
             }
         }
     }

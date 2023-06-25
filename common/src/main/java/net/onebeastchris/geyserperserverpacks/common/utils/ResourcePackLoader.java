@@ -26,16 +26,16 @@ public class ResourcePackLoader {
         for (Configurate.Server server : bootstrap.getConfig().getServers()) {
             if (!bootstrap.getDataFolder().resolve(server.name()).toFile().exists()) {
                 if (bootstrap.getDataFolder().resolve(server.name()).toFile().mkdirs()) {
-                    logger.info("Created folder for server " + server);
-                    logger.info("You can now add bedrock resource packs for " + server + " by adding them in the folder with that name");
+                    logger.info("Created folder for server " + server.name());
+                    logger.info("You can now add Bedrock resource packs for " + server.name() + " by adding them in the folder with that name");
                 }
             } else {
-                logger.info("Found folder for server " + server);
+                logger.info("Found folder for server " + server.name());
                 serverPacks.put(server.name(), loadFromFolder(bootstrap.getDataFolder().resolve(server.name()), logger));
             }
         }
         if (serverPacks.size() > 0) {
-            logger.info("Loaded " + serverPacks.size() + " different pack folders.");
+            logger.info("Loaded " + serverPacks.size() + " different server pack folders.");
         } else {
             logger.info("No pack folders were loaded. If this is your first time using this plugin, see the config file for instructions on usage.");
         }

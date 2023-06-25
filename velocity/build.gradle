@@ -19,6 +19,8 @@ dependencies {
         exclude(group: "net.kyori")
         exclude(group: "com.github.GeyserMC", module: "opennbt")
     }
+    annotationProcessor("com.velocitypowered:velocity-api:3.0.0")
+    annotationProcessor("org.geysermc.event:events:1.1-SNAPSHOT")
 }
 
 build {

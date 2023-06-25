@@ -10,13 +10,22 @@ public class GeyserPerServerPack {
     private final Path dataFolder;
     private final Configurate config;
     private final PSPLogger logger;
-    private Map<String, List<ResourcePack>> packs;
+    private final Map<String, List<ResourcePack>> packs;
 
     public GeyserPerServerPack(Path dataFolder, Configurate config, PSPLogger logger) {
         this.dataFolder = dataFolder;
         this.config = config;
         this.logger = logger;
         this.packs = ResourcePackLoader.loadPacks(this);
+
+        if (config.getPort() <= 0 || config.getPort() > 65535) {
+            logger.error("Invalid port! Please set a valid port in the config!");
+            return;
+        }
+
+        if (config.getAddress() == null || config.getAddress().isEmpty()) {
+            logger.error("Invalid address! Please set a valid address in the config!");
+        }
     }
 
     public Path getDataFolder() {
