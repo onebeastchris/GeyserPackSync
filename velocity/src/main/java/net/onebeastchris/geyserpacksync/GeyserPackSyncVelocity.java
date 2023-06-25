@@ -1,17 +1,24 @@
-package net.onebeastchris.geyserperserverpacks;
+package net.onebeastchris.geyserpacksync;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.command.CommandManager;
+import com.velocitypowered.api.command.CommandMeta;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.PostOrder;
+import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
-import net.onebeastchris.geyserperserverpacks.common.Configurate;
-import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.onebeastchris.geyserpacksync.common.Configurate;
+import net.onebeastchris.geyserpacksync.common.GeyserPackSync;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.geysermc.geyser.api.event.EventRegistrar;
@@ -24,25 +31,30 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Plugin(
-        id = "geyserperserverpacks",
-        name = "GeyserPerServerPacks",
+        id = "geyserpacksync",
+        name = "GeyserPackSync",
         version = "1.0-SNAPSHOT",
-        description = "GeyserPerServerPacks is a plugin that allows you to set a different resource pack for each server.",
-        authors = {"onebeastchris"}
+        description = "GeyserPackSync is a plugin that allows you to set a different Bedrock edition resource pack(s) per server.",
+        authors = {"onebeastchris"},
+        dependencies = {
+            @Dependency(id = "geyser")
+        }
 )
-public class GeyserPerServerPacksVelocity implements EventRegistrar {
+public class GeyserPackSyncVelocity implements EventRegistrar {
     private final LoggerImpl logger;
     private final ProxyServer server;
     private final Path dataDirectory;
-    private GeyserPerServerPack plugin;
+    private GeyserPackSync plugin;
     private HashMap<String, RegisteredServer> playerCache;
     private HashMap<UUID, String> tempUntilServerKnown;
     private final List<String> unknownPacks = new ArrayList<>();
 
     @Inject
-    public GeyserPerServerPacksVelocity(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
+    public GeyserPackSyncVelocity(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
         this.server = server;
         this.logger = new LoggerImpl(logger);
         this.dataDirectory = folder;
@@ -63,7 +75,16 @@ public class GeyserPerServerPacksVelocity implements EventRegistrar {
             return;
         }
 
-        plugin = new GeyserPerServerPack(this.dataDirectory, config, logger);
+        if (config.getPort() <= 0 || config.getPort() > 65535) {
+            logger.error("Invalid port! Please set a valid port in the config!");
+            return;
+        }
+
+        if (config.getAddress() == null || config.getAddress().isEmpty()) {
+            logger.error("Invalid address! Please set a valid address in the config!");
+        }
+
+        plugin = new GeyserPackSync(this.dataDirectory, config, logger);
         playerCache = new HashMap<>();
         tempUntilServerKnown = new HashMap<>();
 
@@ -78,6 +99,12 @@ public class GeyserPerServerPacksVelocity implements EventRegistrar {
             logger.debug("Server: " + server.getServerInfo().getName());
             logger.debug("Packs: " + plugin.getPacks(server.getServerInfo().getName()));
         }
+
+        CommandManager commandManager = server.getCommandManager();
+        CommandMeta meta = commandManager.metaBuilder("packsyncreload").build();
+        SimpleCommand simpleCommand = new ReloadCommand();
+
+        commandManager.register(meta, simpleCommand);
     }
 
     // late: grab server if needed. Last to not break compat with other plugins changing the destination server.
@@ -122,16 +149,16 @@ public class GeyserPerServerPacksVelocity implements EventRegistrar {
         }
     }
 
-    @Subscribe(order = PostOrder.FIRST)
+    @Subscribe(order = PostOrder.EARLY)
     public void onConnect(ServerPreConnectEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
 
-        //Check if the player is a bedrock player
         if (!GeyserApi.api().isBedrockPlayer(uuid)) {
             logger.debug("Player " + event.getPlayer().getUsername() + " is not a bedrock player!");
             return;
         }
 
+        logger.info("hopefully after wait");
         GeyserConnection connection = GeyserApi.api().connectionByUuid(uuid);
         if (connection == null) {
             logger.error("Connection is null for Bedrock player " + uuid + "!");
@@ -178,6 +205,72 @@ public class GeyserPerServerPacksVelocity implements EventRegistrar {
                 event.register(pack);
             }
             unknownPacks.add(xuid);
+        }
+    }
+
+    public boolean reload() {
+        playerCache.clear();
+        tempUntilServerKnown.clear();
+        unknownPacks.clear();
+
+        Configurate config = Configurate.create(this.dataDirectory);
+
+        if (config == null) {
+            logger.error("There was an error loading the config!");
+            return false;
+        }
+
+        plugin = new GeyserPackSync(this.dataDirectory, config, logger);
+        playerCache = new HashMap<>();
+        tempUntilServerKnown = new HashMap<>();
+
+        logger.info("GeyserPerServerPacks has been reloaded!");
+        logger.setDebug(config.isDebug());
+
+        logger.debug("Debug mode is enabled!");
+
+        if (config.getPort() <= 0 || config.getPort() > 65535) {
+            logger.error("Invalid port! Please set a valid port in the config!");
+            return false;
+        }
+
+        if (config.getAddress() == null || config.getAddress().isEmpty()) {
+            logger.error("Invalid address! Please set a valid address in the config!");
+            return false;
+        }
+
+        return true;
+    }
+
+    public final class ReloadCommand implements SimpleCommand {
+
+        @Override
+        public void execute(final Invocation invocation) {
+            CommandSource source = invocation.source();
+            if (reload()) {
+                for (RegisteredServer server : server.getAllServers()) {
+                    logger.debug("Server: " + server.getServerInfo().getName());
+                    logger.debug("Packs: " + plugin.getPacks(server.getServerInfo().getName()));
+                }
+                source.sendMessage(Component.text("Reload successful!").color(NamedTextColor.DARK_GREEN));
+            } else {
+                source.sendMessage(Component.text("Reload failed! Check the console for more information.").color(NamedTextColor.RED));
+            }
+        }
+
+        @Override
+        public boolean hasPermission(final Invocation invocation) {
+            return invocation.source().hasPermission("geyserpacksync.reload");
+        }
+
+        @Override
+        public List<String> suggest(final Invocation invocation) {
+            return List.of();
+        }
+
+        @Override
+        public CompletableFuture<List<String>> suggestAsync(final Invocation invocation) {
+            return CompletableFuture.completedFuture(List.of());
         }
     }
 }

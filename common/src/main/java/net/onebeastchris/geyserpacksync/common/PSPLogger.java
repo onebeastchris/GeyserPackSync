@@ -1,4 +1,4 @@
-package net.onebeastchris.geyserperserverpacks.common;
+package net.onebeastchris.geyserpacksync.common;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 

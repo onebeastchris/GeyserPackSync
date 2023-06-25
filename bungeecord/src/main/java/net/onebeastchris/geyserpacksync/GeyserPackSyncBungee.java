@@ -1,15 +1,17 @@
-package net.onebeastchris.geyserperserverpacks;
+package net.onebeastchris.geyserpacksync;
 
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.event.ServerConnectEvent;
+import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.event.EventPriority;
-import net.onebeastchris.geyserperserverpacks.common.Configurate;
-import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
+import net.onebeastchris.geyserpacksync.common.Configurate;
+import net.onebeastchris.geyserpacksync.common.GeyserPackSync;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
-import net.onebeastchris.geyserperserverpacks.common.PSPLogger;
+import net.onebeastchris.geyserpacksync.common.PSPLogger;
 import org.geysermc.api.connection.Connection;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.GeyserApi;
@@ -21,9 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-public final class GeyserPerServerPacksBungee extends Plugin implements Listener, EventRegistrar {
+public final class GeyserPackSyncBungee extends Plugin implements Listener, EventRegistrar {
     private PSPLogger logger;
-    private GeyserPerServerPack plugin;
+    private GeyserPackSync plugin;
     private HashMap<String, ServerInfo> playerCache;
     private HashMap<UUID, String> tempUntilServerKnown;
 
@@ -31,6 +33,7 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
     public void onEnable() {
         Configurate config = Configurate.create(this.getDataFolder().toPath());
         boolean hasGeyser = getProxy().getPluginManager().getPlugin("Geyser-BungeeCord") != null;
+        logger = new LoggerImpl(this.getLogger());
 
         if (!hasGeyser) {
             getLogger().severe("There is no Geyser or Floodgate plugin detected! Disabling...");
@@ -38,29 +41,25 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
             return;
         }
 
-        if (config == null) {
-            logger.error("There was an error loading the config!");
+        if (configChecks(config)) {
             return;
         }
 
-        logger = new LoggerImpl(this.getLogger());
-        plugin = new GeyserPerServerPack(this.getDataFolder().toPath(), config, logger);
+        plugin = new GeyserPackSync(this.getDataFolder().toPath(), config, logger);
         playerCache = new HashMap<>();
         tempUntilServerKnown = new HashMap<>();
 
         getProxy().getPluginManager().registerListener(this, this);
+        getProxy().getPluginManager().registerCommand(this, new ReloadCommand());
         GeyserApi.api().eventBus().register(this, this);
 
-        getLogger().info("GeyserPerServerPacks has been enabled!");
-        logger.setDebug(config.isDebug());
-
-        logger.debug("Debug mode is enabled");
         if (config.isDebug()) {
             for (ServerInfo server : getProxy().getServers().values()) {
                 logger.debug("Server: " + server.getName());
                 logger.debug("Packs: " + plugin.getPacks(server.getName()));
             }
         }
+        getLogger().info("GeyserPackSync has been enabled!");
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -107,7 +106,7 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onConnect(ServerConnectEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
 
@@ -160,6 +159,71 @@ public final class GeyserPerServerPacksBungee extends Plugin implements Listener
             List<ResourcePack> packs = plugin.getPacks(plugin.getConfig().getDefaultServer());
             for (ResourcePack pack : packs) {
                 event.register(pack);
+            }
+        }
+    }
+
+    public boolean reload() {
+        playerCache.clear();
+        tempUntilServerKnown.clear();
+
+        Configurate config = Configurate.create(this.getDataFolder().toPath());
+
+        if (config == null) {
+            logger.error("There was an error loading the config!");
+            return false;
+        }
+
+        plugin = new GeyserPackSync(this.getDataFolder().toPath(), config, logger);
+        playerCache = new HashMap<>();
+        tempUntilServerKnown = new HashMap<>();
+
+        logger.info("GeyserPerServerPacks has been reloaded!");
+        logger.setDebug(config.isDebug());
+
+        logger.debug("Debug mode is enabled!");
+        return configChecks(config);
+    }
+
+    public boolean configChecks(Configurate config) {
+        if (config == null) {
+            logger.error("There was an error loading the config!");
+            return false;
+        }
+
+        if (config.getPort() <= 0 || config.getPort() > 65535) {
+            logger.error("Invalid port! Please set a valid port in the config!");
+            return false;
+        }
+
+        if (config.getAddress() == null || config.getAddress().isEmpty()) {
+            logger.error("Invalid address! Please set a valid address in the config!");
+            return false;
+        }
+
+        logger.setDebug(config.isDebug());
+        logger.debug("Debug mode is enabled");
+        return true;
+    }
+
+    public class ReloadCommand extends Command {
+        public ReloadCommand() {
+            super("reloadpacks");
+        }
+
+        @Override
+        public void execute(CommandSender sender, String[] args) {
+            sender.sendMessage(new TextComponent("§aReloading GeyserPerServerPacks..."));
+            if (reload()) {
+                if (plugin.getConfig().isDebug()) {
+                    for (ServerInfo server : getProxy().getServers().values()) {
+                        logger.debug("Server: " + server.getName());
+                        logger.debug("Packs: " + plugin.getPacks(server.getName()));
+                    }
+                }
+                sender.sendMessage(new TextComponent("§aGeyserPerServerPacks has been reloaded!"));
+            } else {
+                sender.sendMessage(new TextComponent("§cThere was an error reloading GeyserPerServerPacks!"));
             }
         }
     }

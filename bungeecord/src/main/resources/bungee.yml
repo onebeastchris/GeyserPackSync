@@ -1,6 +1,6 @@
-name: GeyserPerServerPacksBungee
-version: ${project.version}
-main: net.onebeastchris.geyserperserverpacks.GeyserPerServerPacksBungee
-description: A plugin that allows you to set a different resource pack for each server on GeyserMC
+name: GeyserPackSync
+version: 1.0-SNAPSHOT
+main: net.onebeastchris.geyserpacksync.GeyserPackSyncBungee
+description: A plugin that allows you to set a different Bedrock edition resource pack(s) per server on your network.
 softdepends: [Geyser-BungeeCord]
 author: onebeastchris

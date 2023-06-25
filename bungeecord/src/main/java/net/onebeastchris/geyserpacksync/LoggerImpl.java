@@ -1,6 +1,6 @@
-package net.onebeastchris.geyserperserverpacks;
+package net.onebeastchris.geyserpacksync;
 
-import net.onebeastchris.geyserperserverpacks.common.PSPLogger;
+import net.onebeastchris.geyserpacksync.common.PSPLogger;
 
 import java.util.logging.Logger;
 

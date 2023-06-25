@@ -1,6 +1,6 @@
-package net.onebeastchris.geyserperserverpacks;
+package net.onebeastchris.geyserpacksync;
 
-import net.onebeastchris.geyserperserverpacks.common.PSPLogger;
+import net.onebeastchris.geyserpacksync.common.PSPLogger;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 

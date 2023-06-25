@@ -1,8 +1,8 @@
-package net.onebeastchris.geyserperserverpacks.common.utils;
+package net.onebeastchris.geyserpacksync.common.utils;
 
-import net.onebeastchris.geyserperserverpacks.common.Configurate;
-import net.onebeastchris.geyserperserverpacks.common.GeyserPerServerPack;
-import net.onebeastchris.geyserperserverpacks.common.PSPLogger;
+import net.onebeastchris.geyserpacksync.common.Configurate;
+import net.onebeastchris.geyserpacksync.common.GeyserPackSync;
+import net.onebeastchris.geyserpacksync.common.PSPLogger;
 import org.geysermc.geyser.api.pack.PackCodec;
 import org.geysermc.geyser.api.pack.ResourcePack;
 
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class ResourcePackLoader {
-    public static HashMap<String, List<ResourcePack>> loadPacks(GeyserPerServerPack bootstrap) {
+    public static HashMap<String, List<ResourcePack>> loadPacks(GeyserPackSync bootstrap) {
         PSPLogger logger = bootstrap.getLogger();
 
         HashMap<String, List<ResourcePack>> serverPacks = new HashMap<>();

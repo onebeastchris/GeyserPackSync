@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id 'net.onebeastchris.geyserperserverpacks.java-conventions'
+    id 'net.onebeastchris.geyserpacksync.java-conventions'
 }
 
 dependencies {
@@ -22,7 +22,7 @@ dependencies {
 
 build {
     dependsOn jar
-    setArchivesBaseName("geyserperserverpacks-bungee")
+    setArchivesBaseName("geyserpacksync-bungee")
 }
 
 jar {
