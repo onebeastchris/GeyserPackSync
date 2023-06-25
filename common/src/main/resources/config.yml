@@ -1,23 +1,25 @@
 # GeyserPerServerPacks configuration file.
 
-# Set the Geyser ip and port here.
+# Set the Geyser ip and port here that you would use to connect to the proxy. Needed for the reconnect feature.
 address: "127.0.0.1"
 port: 19132
 
 # Which servers should have per-server packs? Add the server names here.
 servers:
-# This would be the name of the server(s) in your proxy config.
-# - name: "lobby"
-# - name: "example"
+  # This would be the name of the server(s) in your proxy config. Add one line per server.
+  # Server names must match the ones in your proxy config exactly.
+  - name: "lobby"
+  - name: "example"
 
-
-# We can't apply the packs of the first server you join to, so you can set a default server here.
-# Forced hosts override this.
+# We can't apply the packs of the first server you join to (yet), so you can set a default server here.
+# The packs of this server get applied when the Bedrock player first joins the proxy
 default-server: "lobby"
 
 # When a player first joins the proxy, they get default packs, since we can't know which server-specific packs to give them.
 # Enable the option below whether players with mis-matched packs should be kicked or not.
+# If you disable the option, players might join a server "example" with the packs of "lobby" if they don't connect through the lobby first.
 kick-on-mismatch: false
 kick-message: "Please connect again in order to join with the correct resource packs."
 
+# Debug messages - leave this disabled
 debug: false
