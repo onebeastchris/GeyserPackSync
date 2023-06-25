@@ -16,7 +16,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.onebeastchris.geyserpacksync.common.Configurate;
+import net.onebeastchris.geyserpacksync.common.utils.Configurate;
 import net.onebeastchris.geyserpacksync.common.GeyserPackSync;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
@@ -68,30 +68,20 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
             return;
         }
 
-        if (config == null) {
-            logger.error("There was an error loading the config!");
+        if (!Configurate.checkConfig(logger, config)) {
             return;
         }
 
-        if (config.getPort() <= 0 || config.getPort() > 65535) {
-            logger.error("Invalid port! Please set a valid port in the config!");
-            return;
-        }
-
-        if (config.getAddress() == null || config.getAddress().isEmpty()) {
-            logger.error("Invalid address! Please set a valid address in the config!");
-        }
-
-        plugin = new GeyserPackSync(this.dataDirectory, config, logger);
         playerCache = new HashMap<>();
         tempUntilServerKnown = new HashMap<>();
+        plugin = new GeyserPackSync(this.dataDirectory, config, logger);
 
         GeyserApi.api().eventBus().register(this, this);
         GeyserApi.api().eventBus().subscribe(this, SessionLoadResourcePacksEvent.class, this::onGeyserResourcePackRequest);
 
         logger.info("GeyserPerServerPacks has been enabled!");
-        logger.setDebug(config.isDebug());
 
+        logger.setDebug(config.isDebug());
         logger.debug("Debug mode is enabled!");
         for (RegisteredServer server : this.server.getAllServers()) {
             logger.debug("Server: " + server.getServerInfo().getName());
@@ -104,8 +94,29 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
                 .aliases("reloadpacks")
                 .build();
         SimpleCommand simpleCommand = new ReloadCommand();
-
         commandManager.register(meta, simpleCommand);
+    }
+
+    @Subscribe(order = PostOrder.EARLY)
+    public void onConnect(ServerPreConnectEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+
+        GeyserConnection connection = GeyserApi.api().connectionByUuid(uuid);
+        if (connection == null) {
+            logger.debug("GeyserConnection is null for player " + uuid + "!");
+            return;
+        }
+
+        String xuid = connection.xuid();
+        if (playerCache.containsKey(xuid)) {
+            RegisteredServer server = playerCache.remove(xuid);
+            logger.debug("Player " + xuid + " is known to us, redirecting to " + server.getServerInfo().getName());
+            event.setResult(ServerPreConnectEvent.ServerResult.allowed(server));
+        } else {
+            logger.debug("does not contain xuid");
+            // grab server once event is completed to not break compat with other plugins changing the destination server.
+            tempUntilServerKnown.put(uuid, xuid);
+        }
     }
 
     // late: grab server if needed. Last to not break compat with other plugins changing the destination server.
@@ -124,9 +135,9 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
             tempUntilServerKnown.remove(uuid);
             return;
         }
+
         String xuid = tempUntilServerKnown.remove(uuid);
         RegisteredServer server = event.getResult().getServer().get();
-
         playerCache.put(xuid, server);
 
         boolean isFirstConnection = unknownPacks.remove(xuid);
@@ -150,63 +161,22 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
         }
     }
 
-    @Subscribe(order = PostOrder.EARLY)
-    public void onConnect(ServerPreConnectEvent event) {
-        UUID uuid = event.getPlayer().getUniqueId();
-
-        if (!GeyserApi.api().isBedrockPlayer(uuid)) {
-            logger.debug("Player " + event.getPlayer().getUsername() + " is not a bedrock player!");
-            return;
-        }
-
-        logger.info("hopefully after wait");
-        GeyserConnection connection = GeyserApi.api().connectionByUuid(uuid);
-        if (connection == null) {
-            logger.error("Connection is null for Bedrock player " + uuid + "!");
-            return;
-        }
-        String xuid = connection.xuid();
-
-        if (playerCache.containsKey(xuid)) {
-            logger.debug("contains xuid");
-            if (playerCache.get(xuid) == null) {
-                logger.debug("Player " + xuid + " is not connected to a server!");
-                return;
-            }
-            //If the player is already connected to a server, we need to remove them from the cache
-            logger.debug("Player " + xuid + " is known to us, redirecting to " + playerCache.get(xuid).getServerInfo().getName());
-            event.setResult(ServerPreConnectEvent.ServerResult.allowed(playerCache.get(xuid)));
-
-            playerCache.remove(xuid);
-        } else {
-            logger.debug("does not contain xuid");
-            // grab server once event is completed to not break compat with other plugins changing the destination server.
-            tempUntilServerKnown.put(uuid, xuid);
-        }
-    }
-
 
     //@org.geysermc.event.subscribe.Subscribe - https://github.com/GeyserMC/Geyser/issues/3694 goes brrrrrrrr
     public void onGeyserResourcePackRequest(SessionLoadResourcePacksEvent event) {
         String xuid = event.connection().xuid();
+        List<ResourcePack> packs = new ArrayList<>();
 
         if (playerCache.containsKey(xuid)) {
             String server = playerCache.get(xuid).getServerInfo().getName();
             logger.debug("Player " + xuid + " is known to us, so we send server packs for " + server);
-            if (server != null) {
-                List<ResourcePack> packs = plugin.getPacks(server);
-                for (ResourcePack pack : packs) {
-                    event.register(pack);
-                }
-            }
+            if (server != null) packs = plugin.getPacks(server);
         } else {
             logger.debug("Player " + xuid + " is not known to us, so we send default packs");
-            List<ResourcePack> packs = plugin.getPacks(plugin.getConfig().getDefaultServer());
-            for (ResourcePack pack : packs) {
-                event.register(pack);
-            }
+            packs = plugin.getPacks(plugin.getConfig().getDefaultServer());
             unknownPacks.add(xuid);
         }
+        packs.forEach(event::register);
     }
 
     public boolean reload() {
@@ -225,22 +195,11 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
         playerCache = new HashMap<>();
         tempUntilServerKnown = new HashMap<>();
 
-        logger.info("GeyserPerServerPacks has been reloaded!");
+        logger.info("GeyserPerServerPacks was reloaded!");
         logger.setDebug(config.isDebug());
-
         logger.debug("Debug mode is enabled!");
 
-        if (config.getPort() <= 0 || config.getPort() > 65535) {
-            logger.error("Invalid port! Please set a valid port in the config!");
-            return false;
-        }
-
-        if (config.getAddress() == null || config.getAddress().isEmpty()) {
-            logger.error("Invalid address! Please set a valid address in the config!");
-            return false;
-        }
-
-        return true;
+        return Configurate.checkConfig(logger, config);
     }
 
     public final class ReloadCommand implements SimpleCommand {

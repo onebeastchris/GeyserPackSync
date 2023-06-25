@@ -1,4 +1,5 @@
 package net.onebeastchris.geyserpacksync.common;
+import net.onebeastchris.geyserpacksync.common.utils.Configurate;
 import net.onebeastchris.geyserpacksync.common.utils.ResourcePackLoader;
 import org.geysermc.geyser.api.pack.ResourcePack;
 
@@ -16,9 +17,9 @@ public class GeyserPackSync {
         this.dataFolder = dataFolder;
         this.config = config;
         this.logger = logger;
+
         this.packs = ResourcePackLoader.loadPacks(this);
     }
-
     public Path getDataFolder() {
         return this.dataFolder;
     }

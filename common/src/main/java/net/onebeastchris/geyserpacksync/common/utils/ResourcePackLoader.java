@@ -1,6 +1,5 @@
 package net.onebeastchris.geyserpacksync.common.utils;
 
-import net.onebeastchris.geyserpacksync.common.Configurate;
 import net.onebeastchris.geyserpacksync.common.GeyserPackSync;
 import net.onebeastchris.geyserpacksync.common.PSPLogger;
 import org.geysermc.geyser.api.pack.PackCodec;

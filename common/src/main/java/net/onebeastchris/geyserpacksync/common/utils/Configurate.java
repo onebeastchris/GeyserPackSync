@@ -1,10 +1,11 @@
-package net.onebeastchris.geyserpacksync.common;
+package net.onebeastchris.geyserpacksync.common.utils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Getter;
+import net.onebeastchris.geyserpacksync.common.PSPLogger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -80,5 +81,24 @@ public class Configurate {
     String kickMessage;
     public record Server(@NonNull @JsonProperty("name") String name,
                          @Nullable @JsonProperty("forced-host") String forcedHost) {
+    }
+
+    public static boolean checkConfig(PSPLogger logger, Configurate config) {
+        if (config == null) {
+            logger.error("Config is null! Please check your config.yml. Regenerating it fully might help.");
+            return false;
+        }
+
+        if (config.getPort() <= 0 || config.getPort() > 65535) {
+            logger.error("Invalid port! Please set a valid port in the config!");
+            return false;
+        }
+
+        if (config.getAddress() == null || config.getAddress().isEmpty()) {
+            logger.error("Invalid address! Please set a valid address in the config!");
+            return false;
+        }
+
+        return true;
     }
 }
