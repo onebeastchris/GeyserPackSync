@@ -23,6 +23,7 @@ public class Configurate {
      *
      * @param dataDirectory The config's directory
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static Configurate create(Path dataDirectory) {
         File folder = dataDirectory.toFile();
         File file = new File(folder, "config.yml");

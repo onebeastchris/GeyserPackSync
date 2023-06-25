@@ -44,7 +44,7 @@ public class LoggerImpl implements PSPLogger {
     @Override
     public void debug(Object object) {
         if (debug) {
-            PSPLogger.super.debug(object);
+            bungeeLogger.info("[DEBUG]:" + object);
         }
     }
 

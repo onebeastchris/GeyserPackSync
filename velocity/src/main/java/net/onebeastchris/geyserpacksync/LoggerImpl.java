@@ -41,7 +41,7 @@ public class LoggerImpl implements PSPLogger {
 
     @Override
     public void debug(@Nullable Object object) {
-        if (debug) logger.debug("[DEBUG]:", object);
+        if (debug) logger.debug("[DEBUG]:" + object);
     }
 
     @Override
