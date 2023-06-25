@@ -15,9 +15,13 @@ Lobby server with lobby resource pack, minigame server with minigame specific re
 2. Place the plugin in your Velocity/BungeeCord plugins folder
 3. Restart your proxy
 4. Configure the config file, specifically ip/port, and the servers. See the config file for more info!
-5. Restart your proxy again
+5. Run `/reloadpacks` to reload the config, or restart the proxy.
 6. Put the Bedrock edition resource packs in the folder with the name of the server they should be used on.
-7. Restart your proxy again.
+7. Restart the proxy, or run `/reloadpacks` to reload the config.
+
+### Commands
+- /reloadpacks - Reloads the config file and packs. Requires the `geyserpacksync.reload` permission.
+- /packsyncreload - Alias for /reloadpacks; same permission.
 
 For help with this project: https://discord.gg/WdmrRHRJhS
 

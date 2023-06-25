@@ -6,7 +6,6 @@ import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.PostOrder;
-import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 @Plugin(
         id = "geyserpacksync",
@@ -101,7 +99,10 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
         }
 
         CommandManager commandManager = server.getCommandManager();
-        CommandMeta meta = commandManager.metaBuilder("packsyncreload").build();
+        CommandMeta meta = commandManager
+                .metaBuilder("packsyncreload")
+                .aliases("reloadpacks")
+                .build();
         SimpleCommand simpleCommand = new ReloadCommand();
 
         commandManager.register(meta, simpleCommand);

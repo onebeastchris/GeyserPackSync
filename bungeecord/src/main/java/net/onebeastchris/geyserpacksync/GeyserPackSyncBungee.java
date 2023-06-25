@@ -25,9 +25,9 @@ import java.util.UUID;
 
 public final class GeyserPackSyncBungee extends Plugin implements Listener, EventRegistrar {
     private PSPLogger logger;
-    private GeyserPackSync plugin;
-    private HashMap<String, ServerInfo> playerCache;
-    private HashMap<UUID, String> tempUntilServerKnown;
+    public GeyserPackSync plugin;
+    private HashMap<String, ServerInfo> playerCache = new HashMap<>();
+    private HashMap<UUID, String> tempUntilServerKnown = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -41,13 +41,11 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
             return;
         }
 
-        if (configChecks(config)) {
+        if (!configChecks(config)) {
             return;
         }
 
         plugin = new GeyserPackSync(this.getDataFolder().toPath(), config, logger);
-        playerCache = new HashMap<>();
-        tempUntilServerKnown = new HashMap<>();
 
         getProxy().getPluginManager().registerListener(this, this);
         getProxy().getPluginManager().registerCommand(this, new ReloadCommand());
@@ -62,9 +60,8 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
         getLogger().info("GeyserPackSync has been enabled!");
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onServerConnectEvent(ServerConnectEvent event) {
-        logger.debug("ServerConnectEvent - lowest priority");
         UUID uuid = event.getPlayer().getUniqueId();
 
         //Check if the player is a bedrock player
@@ -106,7 +103,7 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.LOW)
     public void onConnect(ServerConnectEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
 
@@ -180,8 +177,6 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
 
         logger.info("GeyserPerServerPacks has been reloaded!");
         logger.setDebug(config.isDebug());
-
-        logger.debug("Debug mode is enabled!");
         return configChecks(config);
     }
 
@@ -202,18 +197,18 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
         }
 
         logger.setDebug(config.isDebug());
-        logger.debug("Debug mode is enabled");
+        logger.debug("Debug mode is enabled!");
         return true;
     }
 
     public class ReloadCommand extends Command {
         public ReloadCommand() {
-            super("reloadpacks");
+            super("reloadpacks", "geyserpacksync.reload", "packsyncreload");
         }
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            sender.sendMessage(new TextComponent("§aReloading GeyserPerServerPacks..."));
+            sender.sendMessage(new TextComponent("§eReloading GeyserPerServerPacks..."));
             if (reload()) {
                 if (plugin.getConfig().isDebug()) {
                     for (ServerInfo server : getProxy().getServers().values()) {
