@@ -4,6 +4,7 @@ import net.onebeastchris.geyserpacksync.common.utils.ResourcePackLoader;
 import org.geysermc.geyser.api.pack.ResourcePack;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,13 @@ public class GeyserPackSync {
     public PSPLogger getLogger() {
         return this.logger;
     }
+
     public List<ResourcePack> getPacks(String server) {
-        return this.packs.get(server);
+        var list = this.packs.get(server);
+        if (list == null) {
+            logger.debug("No packs found for server " + server);
+            return Collections.emptyList();
+        }
+        return list;
     }
 }

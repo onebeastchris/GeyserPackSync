@@ -100,6 +100,14 @@ public class Configurate {
             return false;
         }
 
+        if (config.getServers() == null || config.getServers().isEmpty()) {
+            logger.warning("No servers are currently defined, so GeyserPackSync will not work. Check out the GeyserPackSync config!");
+        }
+
+        if (config.getDefaultServer() == null || config.getDefaultServer().isEmpty()) {
+            logger.warning("No default server is currently defined! Please set one in the GeyserPackSync config!");
+        }
+
         return true;
     }
 }
