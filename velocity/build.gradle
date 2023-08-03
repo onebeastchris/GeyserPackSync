@@ -11,7 +11,7 @@ plugins {
 
 dependencies {
     implementation project(':common')
-    compileOnly("com.velocitypowered:velocity-api:3.0.0")
+    compileOnly("com.velocitypowered:velocity-api:3.1.1")
     compileOnly("org.geysermc.geyser:api:2.1.1-SNAPSHOT")
     compileOnly("org.geysermc.geyser:core:2.1.1-SNAPSHOT") {
         exclude(group: "io.netty")
@@ -19,7 +19,7 @@ dependencies {
         exclude(group: "net.kyori")
         exclude(group: "com.github.GeyserMC", module: "opennbt")
     }
-    annotationProcessor("com.velocitypowered:velocity-api:3.0.0")
+    annotationProcessor("com.velocitypowered:velocity-api:3.1.1")
     annotationProcessor("org.geysermc.event:events:1.1-SNAPSHOT")
 }
 
