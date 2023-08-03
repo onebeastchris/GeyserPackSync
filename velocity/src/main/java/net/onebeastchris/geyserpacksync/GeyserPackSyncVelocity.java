@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 @Plugin(
         id = "geyserpacksync",
         name = "GeyserPackSync",
-        version = "1.0-SNAPSHOT",
+        version = "1.1-SNAPSHOT",
         description = "GeyserPackSync is a plugin that allows you to set a different Bedrock edition resource pack(s) per server.",
         authors = {"onebeastchris"},
         dependencies = {
