@@ -97,14 +97,26 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
         commandManager.register(meta, simpleCommand);
     }
 
-    @Subscribe(order = PostOrder.EARLY)
+    @Subscribe(order = PostOrder.NORMAL)
     public void onConnect(ServerPreConnectEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
 
         GeyserConnection connection = GeyserApi.api().connectionByUuid(uuid);
         if (connection == null) {
             logger.debug("GeyserConnection is null for player " + uuid + "!");
-            return;
+
+            // temporary workaround for https://github.com/GeyserMC/Geyser/issues/3456
+            for (GeyserConnection c : GeyserApi.api().onlineConnections()) {
+                if (c.javaUuid().equals(uuid)) {
+                    connection = c;
+                    break;
+                }
+            }
+
+            if (connection == null) {
+                logger.debug("GeyserConnection is still null for player " + uuid + "!");
+                return;
+            }
         }
 
         String xuid = connection.xuid();
@@ -126,7 +138,7 @@ public class GeyserPackSyncVelocity implements EventRegistrar {
 
         //Check if the player is a bedrock player
         if (!tempUntilServerKnown.containsKey(uuid)) {
-            logger.debug("No need to grab server!");
+            logger.debug("No need to grab server - probably a Java player.");
             return;
         }
 

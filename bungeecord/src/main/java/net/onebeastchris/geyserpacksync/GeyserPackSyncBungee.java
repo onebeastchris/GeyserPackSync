@@ -15,6 +15,7 @@ import net.onebeastchris.geyserpacksync.common.PSPLogger;
 import org.geysermc.api.connection.Connection;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.GeyserApi;
+import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.geysermc.geyser.api.event.EventRegistrar;
 import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 import org.geysermc.geyser.api.pack.ResourcePack;
@@ -62,14 +63,26 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
         getLogger().info("GeyserPackSync has been enabled!");
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onConnect(ServerConnectEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
 
         Connection connection = GeyserApi.api().connectionByUuid(uuid);
         if (connection == null) {
             logger.debug("GeyserConnection is null for player " + uuid);
-            return;
+
+            // temporary workaround for https://github.com/GeyserMC/Geyser/issues/3456
+            for (GeyserConnection c : GeyserApi.api().onlineConnections()) {
+                if (c.javaUuid().equals(uuid)) {
+                    connection = c;
+                    break;
+                }
+            }
+
+            if (connection == null) {
+                logger.debug("GeyserConnection is still null for player " + uuid + "!");
+                return;
+            }
         }
 
         String xuid = connection.xuid();

@@ -49,7 +49,7 @@ public class Configurate {
                     .disable(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES);
             return mapper.readValue(dataDirectory.resolve("config.yml").toFile(), Configurate.class);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot create GeyserPerServerPacks config!", e);
+            throw new RuntimeException("Cannot create GeyserPackSync config!", e);
         }
     }
 
