@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Getter;
-import net.onebeastchris.geyserpacksync.common.PSPLogger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -16,15 +15,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class Configurate {
+public class PackSyncConfig {
 
-    /**
-     * Load config
-     *
-     * @param dataDirectory The config's directory
-     */
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static Configurate create(Path dataDirectory) {
+    public static PackSyncConfig create(Path dataDirectory) {
         File folder = dataDirectory.toFile();
         File file = new File(folder, "config.yml");
 
@@ -32,7 +26,7 @@ public class Configurate {
             if (!file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
             }
-            try (InputStream input = Configurate.class.getResourceAsStream("/" + file.getName())) {
+            try (InputStream input = PackSyncConfig.class.getResourceAsStream("/" + file.getName())) {
                 if (input != null) {
                     Files.copy(input, file.toPath());
                 } else {
@@ -47,7 +41,7 @@ public class Configurate {
                     .disable(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES)
                     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                     .disable(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES);
-            return mapper.readValue(dataDirectory.resolve("config.yml").toFile(), Configurate.class);
+            return mapper.readValue(dataDirectory.resolve("config.yml").toFile(), PackSyncConfig.class);
         } catch (IOException e) {
             throw new RuntimeException("Cannot create GeyserPackSync config!", e);
         }
@@ -84,7 +78,9 @@ public class Configurate {
                          @Nullable @JsonProperty("forced-host") String forcedHost) {
     }
 
-    public static boolean checkConfig(PSPLogger logger, Configurate config) {
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public static boolean checkConfig(PackSyncLogger logger, PackSyncConfig config) {
         if (config == null) {
             logger.error("Config is null! Please check your config.yml. Regenerating it fully might help.");
             return false;

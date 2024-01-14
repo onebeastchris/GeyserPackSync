@@ -1,10 +1,10 @@
 package net.onebeastchris.geyserpacksync;
 
-import net.onebeastchris.geyserpacksync.common.PSPLogger;
+import net.onebeastchris.geyserpacksync.common.utils.PackSyncLogger;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 
-public class LoggerImpl implements PSPLogger {
+public class LoggerImpl implements PackSyncLogger {
 
     private final Logger logger;
 

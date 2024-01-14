@@ -1,8 +1,8 @@
-package net.onebeastchris.geyserpacksync.common;
+package net.onebeastchris.geyserpacksync.common.utils;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public interface PSPLogger {
+public interface PackSyncLogger {
 
     /**
      * Logs an error message to console

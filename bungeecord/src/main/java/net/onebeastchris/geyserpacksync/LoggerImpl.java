@@ -1,10 +1,10 @@
 package net.onebeastchris.geyserpacksync;
 
-import net.onebeastchris.geyserpacksync.common.PSPLogger;
+import net.onebeastchris.geyserpacksync.common.utils.PackSyncLogger;
 
 import java.util.logging.Logger;
 
-public class LoggerImpl implements PSPLogger {
+public class LoggerImpl implements PackSyncLogger {
 
     Logger bungeeLogger;
     boolean debug = false;
@@ -37,7 +37,7 @@ public class LoggerImpl implements PSPLogger {
     @Override
     public void debug(String message) {
         if (debug) {
-            bungeeLogger.info(message);
+            bungeeLogger.info("[DEBUG]: " + message);
         }
     }
 
