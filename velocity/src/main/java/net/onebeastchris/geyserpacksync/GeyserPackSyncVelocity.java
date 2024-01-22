@@ -82,7 +82,7 @@ public class GeyserPackSyncVelocity implements EventRegistrar, GeyserPackSyncBoo
         for (RegisteredServer server : this.server.getAllServers()) {
             String serverName = server.getServerInfo().getName();
             logger.debug("Server: " + serverName);
-            logger.debug("Packs: " + plugin.getPacks(backendFromName(serverName)));
+            logger.debug("Packs: " + plugin.getPacks(Objects.requireNonNull(backendFromName(serverName))));
         }
 
         CommandManager commandManager = server.getCommandManager();

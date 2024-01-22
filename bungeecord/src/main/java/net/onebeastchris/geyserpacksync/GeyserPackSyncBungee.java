@@ -22,7 +22,6 @@ import org.geysermc.geyser.api.event.EventRegistrar;
 import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -57,7 +56,7 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
             logger.debug("Debug mode enabled!");
             for (ServerInfo server : getProxy().getServers().values()) {
                 logger.debug("Server: " + server.getName());
-                logger.debug("Packs: " + plugin.getPacks(backendFromName(server.getName())));
+                logger.debug("Packs: " + plugin.getPacks(Objects.requireNonNull(backendFromName(server.getName()))));
             }
         }
 
@@ -152,7 +151,7 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
                 if (plugin.getConfig().isDebug()) {
                     for (ServerInfo server : getProxy().getServers().values()) {
                         logger.debug("Server: " + server.getName());
-                        logger.debug("Packs: " + plugin.getPacks(backendFromName(server.getName())));
+                        logger.debug("Packs: " + plugin.getPacks(Objects.requireNonNull(backendFromName(server.getName()))));
                     }
                 }
                 sender.sendMessage(TextComponent.fromLegacy("§aGeyserPerServerPacks has been reloaded!"));

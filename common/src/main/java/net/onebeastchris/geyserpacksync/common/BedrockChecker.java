@@ -1,15 +1,11 @@
 package net.onebeastchris.geyserpacksync.common;
 
 import io.netty.channel.Channel;
-import io.netty.util.AttributeKey;
 import net.onebeastchris.geyserpacksync.common.utils.FloodgateUtil;
 import org.geysermc.api.connection.Connection;
-import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
 
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 public class BedrockChecker {
@@ -25,7 +21,7 @@ public class BedrockChecker {
         if (floodgate) {
             try {
                 GeyserPackSync.getLogger().debug("Looking up player " + uuid + " via channel hack");
-                return FloodgateUtil.getBedrockXuid(channel, uuid);
+                return FloodgateUtil.getBedrockXuid(channel);
             } catch (NoClassDefFoundError ignored) {
                 return null;
             }
