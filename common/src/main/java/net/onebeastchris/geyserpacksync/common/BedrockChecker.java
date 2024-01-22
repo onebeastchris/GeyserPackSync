@@ -18,7 +18,7 @@ public class BedrockChecker {
     }
 
     public String getBedrockXuid(Channel channel, UUID uuid) {
-        if (floodgate) {
+        if (floodgate && channel != null) {
             try {
                 GeyserPackSync.getLogger().debug("Looking up player " + uuid + " via channel hack");
                 return FloodgateUtil.getBedrockXuid(channel);

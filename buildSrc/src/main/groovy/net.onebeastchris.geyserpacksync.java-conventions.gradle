@@ -34,16 +34,6 @@ repositories {
         url = uri("https://jitpack.io")
         content { includeGroupByRegex("com\\.github\\..*") }
     }
-
-    // velocity-proxy
-    maven {
-        url = uri("https://maven.elytrium.net/repo/")
-    }
-
-    // adventure
-    maven {
-        url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-    }
 }
 
 group = 'net.onebeastchris.geyserpacksync'

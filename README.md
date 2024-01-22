@@ -2,10 +2,15 @@
 
 A Velocity/BungeeCord plugin that utilizes Geyser's API to allow for per-server resource packs. 
 
-Example:
-Lobby server with lobby resource pack, minigame server with minigame specific resource pack, etc.
-
 #### Download: https://modrinth.com/plugin/geyserpacksync
+A changelog can be found [here](https://github.com/onebeastchris/GeyserPackSync/blob/master/CHANGELOG.md).
+
+### How does it work?
+Bedrock edition is... weird. It only allows resource packs to be sent once - before actually logging in to a server.
+We also cannot disable/enable resource packs on the fly.
+
+To work around this, this plugin sends the default resource pack(s) on login, and then sends the server specific resource pack(s) on server switch.
+This means that the player will have to log out and back in to get the new resource pack(s) - which is done automatically with a transfer packet.
 
 ### Current limitations
 - Does not fully work with forced hosts/the player logging back in to a server that is not the default server.
@@ -26,11 +31,3 @@ Lobby server with lobby resource pack, minigame server with minigame specific re
 For help with this project: https://discord.gg/WdmrRHRJhS
 
 ### DISCLAIMER: While this project is made to work with Geyser (literally requires geyser), it is not an official one - for help, ask in issues here or on the linked discord.
-
-### How does it work?
-Bedrock edition is... weird. It only allows resource packs to be sent once - before actually logging in to a server.
-We also cannot disable/enable resource packs on the fly.
-
-To work around this, this plugin sends the default resource pack(s) on login, and then sends the server specific resource pack(s) on server switch.
-This means that the player will have to log out and back in to get the new resource pack(s) - which is done automatically with a transfer packet.
-

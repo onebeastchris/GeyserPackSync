@@ -146,7 +146,7 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            sender.sendMessage(TextComponent.fromLegacy("§eReloading GeyserPerServerPacks..."));
+            sender.sendMessage(TextComponent.fromLegacy("§eReloading GeyserPackSync..."));
             if (GeyserPackSyncBungee.this.reload()) {
                 if (plugin.getConfig().isDebug()) {
                     for (ServerInfo server : getProxy().getServers().values()) {
@@ -154,9 +154,9 @@ public final class GeyserPackSyncBungee extends Plugin implements Listener, Even
                         logger.debug("Packs: " + plugin.getPacks(Objects.requireNonNull(backendFromName(server.getName()))));
                     }
                 }
-                sender.sendMessage(TextComponent.fromLegacy("§aGeyserPerServerPacks has been reloaded!"));
+                sender.sendMessage(TextComponent.fromLegacy("§a GeyserPackSync has been reloaded!"));
             } else {
-                sender.sendMessage(TextComponent.fromLegacy("§cThere was an error reloading GeyserPerServerPacks!"));
+                sender.sendMessage(TextComponent.fromLegacy("§cThere was an error reloading GeyserPackSync!"));
             }
         }
     }

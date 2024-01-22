@@ -12,6 +12,7 @@ plugins {
 dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2")
     implementation("com.fasterxml.jackson.core:jackson-core:2.15.2")
+
     compileOnly("org.projectlombok:lombok:1.18.28")
     compileOnly("org.geysermc.geyser:api:2.2.0-SNAPSHOT")
     compileOnly("org.geysermc.floodgate:api:2.2.2-SNAPSHOT")

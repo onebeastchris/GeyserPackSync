@@ -14,7 +14,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+//import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import io.netty.channel.Channel;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -69,13 +69,19 @@ public class GeyserPackSyncVelocity implements EventRegistrar, GeyserPackSyncBoo
             return;
         }
 
+        try {
+            VelocityAccessor.init();
+        } catch (IllegalStateException e) {
+            logger.error(e.getMessage());
+        }
+
         plugin = new GeyserPackSync(this);
 
         GeyserApi.api().eventBus().register(this, this);
         GeyserApi.api().eventBus().subscribe(this, SessionLoadResourcePacksEvent.class, this::onGeyserResourcePackRequest);
         GeyserApi.api().eventBus().subscribe(this, SessionDisconnectEvent.class, this::onGeyserDisconnectEvent);
 
-        logger.info("GeyserPerServerPacks has been enabled!");
+        logger.info("GeyserPackSync has been enabled!");
 
         logger.setDebug(config.isDebug());
         logger.debug("Debug mode is enabled!");
@@ -102,8 +108,10 @@ public class GeyserPackSyncVelocity implements EventRegistrar, GeyserPackSyncBoo
             return;
         }
 
-        final ConnectedPlayer connectedPlayer = (ConnectedPlayer) event.getPlayer();
-        final Channel channel = connectedPlayer.getConnection().getChannel();
+        //final ConnectedPlayer connectedPlayer = (ConnectedPlayer) event.getPlayer();
+        //final Channel channel = connectedPlayer.getConnection().getChannel();
+
+        Channel channel = VelocityAccessor.getChannel(event.getPlayer());
 
         Optional<BackendServer> backendServer = plugin.handleFirst(
                 VelocityBackendServer.of(serverresult.get()),
@@ -125,8 +133,10 @@ public class GeyserPackSyncVelocity implements EventRegistrar, GeyserPackSyncBoo
             return;
         }
 
-        final ConnectedPlayer connectedPlayer = (ConnectedPlayer) event.getPlayer();
-        final Channel channel = connectedPlayer.getConnection().getChannel();
+        //final ConnectedPlayer connectedPlayer = (ConnectedPlayer) event.getPlayer();
+        //final Channel channel = connectedPlayer.getConnection().getChannel();
+
+        Channel channel = VelocityAccessor.getChannel(event.getPlayer());
 
         Optional<BackendServer> backendServer = plugin.handleLast(
                 VelocityBackendServer.of(serverresult.get()),
