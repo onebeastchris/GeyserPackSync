@@ -1,7 +1,6 @@
-## GeyserPackSync changelog: Version 2.0-SNAPSHOT
+Bugfix for 2.0: Catch NullPointerException if a disconnection happens unexpectedly
 
-This is a big one!
-
+2.0 Changelog:
 This release aims to fix all the weird issues where Bedrock players sometimes weren't recognized properly.
 Additionally, this release has tons of internal changes to ensure consistent behavior across the bungee and velocity version.
 

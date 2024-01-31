@@ -181,9 +181,14 @@ public class GeyserPackSync {
     }
 
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
-        getLogger().debug(String.format("User %s (%s) disconnected, removing from player pack tracker",
-                event.connection().name(), event.connection().xuid()));
-        this.playerPackTracker.remove(event.connection().xuid());
+        try {
+            getLogger().debug(String.format("User %s (%s) disconnected, removing from player pack tracker",
+                    event.connection().name(), event.connection().xuid()));
+            this.playerPackTracker.remove(event.connection().xuid());
+        } catch (NullPointerException ignored) {
+            // Can occur when disconnection is due to an error in the connection.
+            // Since these players aren't in the cache anyway - hopefully - we yeet them
+        }
     }
 
     public void reload() {
