@@ -33,6 +33,8 @@ public class GeyserPackSync {
         this.defaultServer = bootstrap.backendFromName(bootstrap.config().getDefaultServer());
         if (defaultServer == null) {
             getLogger().error("Default server is null! Please set a default server in the config.");
+        } else {
+            getLogger().debug("Default server set to: " + defaultServer.name());
         }
 
         if (!bootstrap.floodgatePresent()) {
@@ -54,10 +56,9 @@ public class GeyserPackSync {
      */
     public Optional<BackendServer> handleFirst(BackendServer newServer, Channel channel, UUID uuid) {
         String xuid = checker.getBedrockXuid(channel, uuid);
-        getLogger().debug("handleFirst xuid result: " + xuid);
 
         if (xuid == null) {
-            getLogger().debug("Not a Bedrock player: " + uuid);
+            getLogger().debug("Not a Bedrock player since xuid returned null: " + uuid);
             return Optional.empty();
         }
 
@@ -93,10 +94,9 @@ public class GeyserPackSync {
     public Optional<BackendServer> handleLast(BackendServer targetServer, Channel channel, UUID uuid,
                               boolean firstConnection, Consumer<String> disconnectFunction) {
         String xuid = checker.getBedrockXuid(channel, uuid);
-        getLogger().debug("handleLast xuid result: " + xuid);
 
         if (xuid == null) {
-            getLogger().debug("Not a Bedrock player: " + uuid);
+            getLogger().debug("Not a Bedrock player (xuid was null) : " + uuid);
             return Optional.empty();
         }
 
@@ -173,8 +173,8 @@ public class GeyserPackSync {
             playerPackTracker.put(xuid, defaultServer);
         } else {
             getLogger().debug("Sending " + server.name() + " 's packs for " + event.connection().name());
-            playerPackTracker.put(xuid, server);
             packs = getPacks(server);
+            playerPackTracker.put(xuid, server);
         }
 
         packs.forEach(event::register);
